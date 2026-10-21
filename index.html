@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OUR STORY — Menu Digital</title>
+<style>
+:root{--cream:#f8f1e7;--brown:#543a2b;--tan:#dfc5a5;--white:#fffdf9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--brown);font-family:Arial,sans-serif}
+header{background:var(--brown);color:white;padding:25px 18px;text-align:center}
+header h1{letter-spacing:5px;margin:5px}
+header p{font-size:13px;color:#ead8c4}
+main{max-width:700px;margin:auto;padding:18px}
+h2{font-size:21px}
+.intro{padding:18px 0}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters button,.btn{border:0;border-radius:10px;padding:11px 14px;background:var(--brown);color:white;font-weight:bold}
+.filters button{background:#e8d8c5;color:var(--brown)}
+.filters button.active{background:var(--brown);color:white}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.item{background:var(--white);border-radius:15px;padding:15px;box-shadow:0 3px 12px #543a2b0c}
+.item .emoji{font-size:30px}
+.item h3{font-size:15px;min-height:36px;margin:10px 0}
+.price{font-weight:bold;margin:12px 0}
+.item button{width:100%;border:0;border-radius:9px;padding:10px;background:var(--tan);color:var(--brown);font-weight:bold}
+.panel{background:var(--white);border-radius:15px;padding:17px;margin-top:22px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d7c5b2;border-radius:9px;margin:6px 0 13px;background:white;font:inherit}
+label{font-size:13px;font-weight:bold}
+.cartline{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #eee}
+.cartline button{border:0;background:#ead8c4;border-radius:6px;padding:4px 9px;color:#543a2b}
+.total{display:flex;justify-content:space-between;font-size:18px;font-weight:bold;margin:16px 0}
+.btn{width:100%;padding:14px;cursor:pointer}
+.note{font-size:12px;line-height:1.6;color:#776354}
+footer{text-align:center;padding:25px;font-size:12px}
+@media(max-width:380px){.menu{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>OUR STORY</h1>
+  <p>Setiap rasa punya cerita ☕</p>
+</header>
+<main>
+  <section class="intro">
+    <h2>Halo, selamat datang!</h2>
+    <p>Pilih menu favoritmu dan pesan langsung dari meja.</p>
+    <label>Nomor meja</label>
+    <input id="table" placeholder="Contoh: 01">
+  </section>
+
+  <h2>Menu kami</h2>
+  <div class="filters" id="filters"></div>
+  <div class="menu" id="menu"></div>
+
+  <section class="panel" id="cart">
+    <h2>Keranjang 🛍️</h2>
+    <div id="cartItems">Belum ada pesanan.</div>
+    <div class="total"><span>Total</span><span id="total">Rp0</span></div>
+    <label>Catatan pesanan</label>
+    <textarea id="notes" placeholder="Contoh: gula sedikit"></textarea>
+    <label>Metode pembayaran</label>
+    <select id="payment">
+      <option value="kasir">Bayar di kasir</option>
+      <option value="qris">Transfer / QRIS</option>
+    </select>
+    <button class="btn" onclick="checkout()">Buat pesanan</button>
+    <p class="note">Versi demo: pesanan belum dikirim ke dapur atau server. Pembayaran QRIS belum terhubung; jangan menganggap pembayaran sudah berhasil hanya dengan memilih opsi ini.</p>
+    <div id="result"></div>
+  </section>
+</main>
+<footer>OUR STORY · Cerita Kita, Rasa Kita 🤎</footer>
+<script>
+const products=[
+["Americano","Coffee",13000,"☕"],
+["Americano Gula Aren","Coffee",16000,"🧋"],
+["Ice Butterscotch Latte","Coffee",18000,"☕"],
+["Ice Butterscotch Aren Latte","Coffee",18000,"🧋"],
+["Ice Salted Caramel Latte","Coffee",18000,"🥤"],
+["Ice Coffee Aren Latte","Coffee",18000,"☕"],
+["Tonic Presso","Coffee",18000,"🥤"],
+["Ice Vanilla Latte","Coffee",18000,"🧋"],
+["Mont Blanc","Coffee",25000,"☕"],
+["Ice Pistachio","Coffee",18000,"🥤"],
+["Ice Cappuccino Latte","Coffee",18000,"☕"],
+["Ice Shaken Double Spanish Latte","Coffee",18000,"🧋"],
+["Ice Matcha Latte","Non-Coffee",18000,"🍵"],
+["Ice Matcha Butterscotch","Non-Coffee",20000,"🍵"],
+["Ice Taro Latte","Non-Coffee",18000,"🥤"],
+["Ice Milo Dino","Non-Coffee",18000,"🍫"],
+["Ice Red Velvet Latte","Non-Coffee",18000,"🥤"],
+["Mie Nyimak","Snack",13000,"🍜"],
+["Mi Nyimak Jumbo","Snack",16000,"🍜"],
+["French Fries","Snack",15000,"🍟"],
+["Roti Panggang Coklat / Keju","Snack",12000,"🍞"],
+["Roti Panggang Coklat Keju","Snack",15000,"🍞"],
+["Pisang Kembung","Snack",15000,"🍌"],
+["Pisang Kembung Large","Snack",20000,"🍌"]
+];
+let category="Semua",cart={};
+const money=n=>"Rp"+n.toLocaleString("id-ID");
+function drawFilters(){
+ document.getElementById("filters").innerHTML=["Semua","Coffee","Non-Coffee","Snack"].map(c=>
+ `<button class="${category===c?'active':''}" onclick="category='${c}';drawFilters();drawMenu()">${c}</button>`).join("");
+}
+function drawMenu(){
+ const list=products.map((p,i)=>({...{p,i}})).filter(x=>category==="Semua"||x.p[1]===category);
+ document.getElementById("menu").innerHTML=list.map(({p,i})=>
+ `<article class="item"><div class="emoji">${p[3]}</div><h3>${p[0]}</h3><div class="price">${money(p[2])}</div><button onclick="add(${i})">+ Tambah</button></article>`).join("");
+}
+function add(i){cart[i]=(cart[i]||0)+1;drawCart()}
+function change(i,d){cart[i]+=d;if(cart[i]<=0)delete cart[i];drawCart()}
+function drawCart(){
+ let ids=Object.keys(cart);
+ document.getElementById("cartItems").innerHTML=ids.length?ids.map(i=>
+ `<div class="cartline"><div>${products[i][0]}<br><small>${money(products[i][2])}</small></div><div><button onclick="change(${i},-1)">−</button> ${cart[i]} <button onclick="change(${i},1)">+</button></div></div>`).join(""):"Belum ada pesanan.";
+ document.getElementById("total").textContent=money(ids.reduce((s,i)=>s+products[i][2]*cart[i],0));
+}
+function checkout(){
+ const ids=Object.keys(cart);
+ if(!ids.length){alert("Keranjang masih kosong. Pilih menu dahulu.");return}
+ const table=document.getElementById("table").value.trim();
+ if(!table){alert("Masukkan nomor meja dahulu.");document.getElementById("table").focus();return}
+ const order={table,items:ids.map(i=>({name:products[i][0],qty:cart[i],price:products[i][2]})),total:ids.reduce((s,i)=>s+products[i][2]*cart[i],0),notes:document.getElementById("notes").value,payment:document.getElementById("payment").value};
+ document.getElementById("result").innerHTML="<p><b>Ringkasan pesanan berhasil dibuat di halaman ini.</b></p><p>Meja: "+table+"</p><p>Total: "+money(order.total)+"</p><p>Metode: "+(order.payment==="kasir"?"Bayar di kasir":"Transfer / QRIS (belum aktif)")+"</p><p class='note'>Ini baru demo di perangkat kamu. Pesanan belum tersimpan di server dan belum terlihat oleh admin/dapur.</p>";
+}
+drawFilters();drawMenu();drawCart();
+const params=new URLSearchParams(location.search);
+if(params.get("meja"))document.getElementById("table").value=params.get("meja");
+</script>
+</body>
+</html>
